@@ -36,13 +36,6 @@ class ChatListScreen extends ConsumerWidget {
                 color: Colors.white,
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(LucideIcons.messageSquare, color: Colors.white),
-                onPressed: () => _showNewChatDialog(context, ref),
-                tooltip: "Nouvelle discussion",
-              ),
-            ],
           ),
           conversationsAsync.when(
             data: (conversations) {
@@ -124,6 +117,19 @@ class ChatListScreen extends ConsumerWidget {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
+      ),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height * 0.11, // 11% from bottom
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showNewChatDialog(context, ref),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.black
+              : Colors.white,
+          child: const Icon(LucideIcons.messageCircle, size: 28),
+        ),
       ),
     );
   }
