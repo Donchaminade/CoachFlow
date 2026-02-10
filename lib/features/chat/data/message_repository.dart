@@ -18,6 +18,18 @@ class MessageRepository {
     final box = await _box;
     await box.put(message.id, message);
   }
+
+  Future<void> deleteMessages(List<String> messageIds) async {
+    final box = await _box;
+    await box.deleteAll(messageIds);
+  }
+
+  // Delete a single message
+  Future<void> deleteMessage(String messageId) async {
+    final box = await _box;
+    await box.delete(messageId);
+    print("🗑️ Message deleted: $messageId");
+  }
   
   Future<void> deleteMessagesForCoach(String coachId) async {
     final box = await _box;

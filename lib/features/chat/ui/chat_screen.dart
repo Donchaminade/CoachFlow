@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For Clipboard
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/chat_provider.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
+import '../models/message.dart';
+import '../data/message_repository.dart';
 import '../data/tts_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -95,6 +98,185 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _selectionMode = false;
       _selectedMessageIds.clear();
     });
+  }
+
+  // Long press actions
+  void _showMessageActions(BuildContext context, Message message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? const Color(0xFF1E1E1E)
+              : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _actionTile(
+              context,
+              icon: LucideIcons.copy,
+              label: "Copier",
+              onTap: () {
+                Navigator.pop(context);
+                _copyMessage(message);
+              },
+            ),
+            _actionTile(
+              context,
+              icon: LucideIcons.trash2,
+              label: "Supprimer",
+              color: Colors.red,
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDeleteMessage(message);
+              },
+            ),
+            _actionTile(
+              context,
+              icon: LucideIcons.mic,
+              label: "Vocal",
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "Bientôt",
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.amber[700],
+                  ),
+                ),
+              ),
+              enabled: false,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    Color? color,
+    Widget? trailing,
+    bool enabled = true,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: enabled ? (color ?? Theme.of(context).iconTheme.color) : Colors.grey,
+      ),
+      title: Text(
+        label,
+        style: GoogleFonts.poppins(
+          color: enabled ? (color ?? Theme.of(context).textTheme.bodyLarge?.color) : Colors.grey,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: trailing,
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
+    );
+  }
+
+  void _copyMessage(Message message) {
+    Clipboard.setData(ClipboardData(text: message.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Message copié",
+          style: GoogleFonts.poppins(),
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _confirmDeleteMessage(Message message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Supprimer le message ?",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          "Cette action est irréversible.",
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Annuler",
+              style: GoogleFonts.poppins(color: Colors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteMessage(message);
+            },
+            child: Text(
+              "Supprimer",
+              style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteMessage(Message message) async {
+    try {
+      // Delete from repository
+      final messageRepo = MessageRepository();
+      await messageRepo.deleteMessage(message.id);
+      
+      // Refresh the chat to update UI
+      ref.invalidate(chatProvider(widget.coachId));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Message supprimé",
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print("❌ Error deleting message: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Erreur lors de la suppression",
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _deleteSelectedMessages() async {
@@ -232,109 +414,112 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, message) {
+  Widget _buildMessageBubble(BuildContext context, Message message) {
     final isUser = message.isUser;
     final theme = Theme.of(context);
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        decoration: BoxDecoration(
-          color: isUser 
-              ? (Theme.of(context).brightness == Brightness.dark 
-                  ? const Color(0xFF6366F1) // Indigo for dark mode
-                  : theme.colorScheme.primary) 
-              : theme.cardTheme.color,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
-            bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+      child: GestureDetector(
+        onLongPress: () => _showMessageActions(context, message),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          decoration: BoxDecoration(
+            color: isUser 
+                ? (Theme.of(context).brightness == Brightness.dark 
+                    ? const Color(0xFF6366F1) // Indigo for dark mode
+                    : theme.colorScheme.primary) 
+                : theme.cardTheme.color,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(20),
+              topRight: const Radius.circular(20),
+              bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
+              bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Message content - Markdown for AI, Text for User
-            if (isUser)
-              Text(
-                message.text,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 15,
-                  height: 1.4,
-                ),
-              )
-            else
-              MarkdownBody(
-                data: message.text,
-                styleSheet: MarkdownStyleSheet(
-                  p: GoogleFonts.poppins(
-                    color: theme.textTheme.bodyLarge?.color,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Message content - Markdown for AI, Text for User
+              if (isUser)
+                Text(
+                  message.text,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
                     fontSize: 15,
                     height: 1.4,
                   ),
-                  strong: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                  em: GoogleFonts.poppins(fontStyle: FontStyle.italic),
-                  code: GoogleFonts.robotoMono(
-                    backgroundColor: Colors.grey.shade200,
-                    fontSize: 14,
+                )
+              else
+                MarkdownBody(
+                  data: message.text,
+                  styleSheet: MarkdownStyleSheet(
+                    p: GoogleFonts.poppins(
+                      color: theme.textTheme.bodyLarge?.color,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
+                    strong: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                    em: GoogleFonts.poppins(fontStyle: FontStyle.italic),
+                    code: GoogleFonts.robotoMono(
+                      backgroundColor: Colors.grey.shade200,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
+              // Bottom row with timestamp and TTS button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      DateFormat('HH:mm').format(message.timestamp),
+                      style: GoogleFonts.poppins(
+                        color: isUser ? Colors.white.withOpacity(0.7) : Colors.grey[500],
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                  // TTS button for AI messages only - Prominent style
+                  if (!isUser)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          _currentPlayingMessageId == message.id 
+                              ? LucideIcons.volume2 
+                              : LucideIcons.volume,
+                          size: 20,
+                        ),
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        onPressed: () => _toggleTts(message.id, message.text),
+                      ),
+                    ),
+                ],
               ),
-            // Bottom row with timestamp and TTS button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    DateFormat('HH:mm').format(message.timestamp),
-                    style: GoogleFonts.poppins(
-                      color: isUser ? Colors.white.withOpacity(0.7) : Colors.grey[500],
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-                // TTS button for AI messages only - Prominent style
-                if (!isUser)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        _currentPlayingMessageId == message.id 
-                            ? LucideIcons.volume2 
-                            : LucideIcons.volume,
-                        size: 20,
-                      ),
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
-                      onPressed: () => _toggleTts(message.id, message.text),
-                    ),
-                  ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
