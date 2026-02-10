@@ -1,0 +1,50 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user_context.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class UserContextAdapter extends TypeAdapter<UserContext> {
+  @override
+  final int typeId = 2;
+
+  @override
+  UserContext read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return UserContext(
+      nickname: fields[0] as String,
+      goals: fields[1] as String,
+      values: fields[2] as String,
+      constraints: fields[3] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, UserContext obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.nickname)
+      ..writeByte(1)
+      ..write(obj.goals)
+      ..writeByte(2)
+      ..write(obj.values)
+      ..writeByte(3)
+      ..write(obj.constraints);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserContextAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
