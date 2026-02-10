@@ -17,8 +17,19 @@ class BytezChatService implements ChatService {
       
       // Add system instruction as first message
       final systemMessage = StringBuffer();
-      systemMessage.writeln("INSTRUCTION SYSTÈME (Tu es ce coach):");
+      systemMessage.writeln("RÈGLE ABSOLUE - LANGUE:");
+      systemMessage.writeln("TU DOIS TOUJOURS répondre dans la MÊME LANGUE que l'utilisateur.");
+      systemMessage.writeln("Si l'utilisateur écrit en FRANÇAIS, tu DOIS répondre en FRANÇAIS.");
+      systemMessage.writeln("Si l'utilisateur écrit en ANGLAIS, tu DOIS répondre en ANGLAIS.");
+      systemMessage.writeln("JAMAIS d'exceptions à cette règle.");
+      systemMessage.writeln("\nINSTRUCTION SYSTÈME (Tu es ce coach):");
       systemMessage.writeln(systemPrompt);
+      systemMessage.writeln("\nSTYLE DE RÉPONSE:");
+      systemMessage.writeln("- Sois CONCIS et DIRECT (max 3-4 phrases courtes)");
+      systemMessage.writeln("- Donne UN exemple concret et réel à chaque fois");
+      systemMessage.writeln("- Utilise le markdown pour structurer (gras pour mots-clés)");
+      systemMessage.writeln("- Évite les longs paragraphes, préfère les listes courtes");
+      systemMessage.writeln("- Tes réponses doivent être actionnables immédiatement");
       
       if (userContext.isNotEmpty) {
         systemMessage.writeln("\nCONTEXTE UTILISATEUR:");

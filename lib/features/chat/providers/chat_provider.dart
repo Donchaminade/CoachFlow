@@ -95,6 +95,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
     
     await _repository.addMessage(userMessage);
+    print("💾 User message saved: ${userMessage.id} for coach: ${_coachId}");
     
     // Optimistic update & set typing to true
     state = state.copyWith(
@@ -118,6 +119,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       );
       
       await _repository.addMessage(aiMessage);
+      print("💾 AI message saved: ${aiMessage.id} for coach: ${_coachId}");
       
       state = state.copyWith(
         messages: AsyncValue.data([...state.messages.value!, aiMessage]),
@@ -125,7 +127,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       );
 
     } catch (e) {
-      print("Error getting AI response: $e");
+      print("❌ Error getting AI response: $e");
       state = state.copyWith(isTyping: false);
       // Optionally add an error message to the list or handle context
     }

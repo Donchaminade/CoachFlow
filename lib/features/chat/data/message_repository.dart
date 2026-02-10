@@ -40,6 +40,8 @@ class MessageRepository {
 
   Future<Set<String>> getActiveCoachIds() async {
     final box = await _box;
-    return box.values.map((m) => m.coachId).toSet();
+    final activeIds = box.values.map((m) => m.coachId).toSet();
+    print("📊 Active coach IDs in history: $activeIds (total messages: ${box.length})");
+    return activeIds;
   }
 }

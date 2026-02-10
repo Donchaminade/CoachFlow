@@ -1,18 +1,36 @@
 Resume de sa video : 
 
-Hi. It's Simon and this is Better Creating. So here's the app I wanna build, an AI coaching app. Coaching is one of the highest returns on investment that you can make with your time.
+Hi. It's Simon and this is Better Creating. 
+So here's the app I wanna build, an AI coaching app. 
+Coaching is one of the highest returns on investment that you can make with your time.
 
-The right guidance at the right moment can change everything. It's the one thing I don't think about spending money on. But most people, well, they never access it. They don't know how to find the right coach, don't have the time, and yet can't often afford it.
+The right guidance at the right moment can change everything. It's the one thing I don't think about spending money on. But most people, 
+well, they never access it. They don't know how to find the right coach, don't have the time, and yet can't often afford it.
 
-As for AI agents, for many, they still feel too complicated, too technical, too much to set up. Now I've spent the last year building AI coaching systems in Notion that thousands of people use. Now I want to bring that to a standalone mobile app. Imagine a beautiful minimal app where users can download, create, and share AI coaches.
+As for AI agents, for many, they still feel too complicated, 
+too technical, too much to set up. Now I've spent the last year building AI coaching systems in Notion that thousands of people use. 
+Now I want to bring that to a standalone mobile app. 
+Imagine a beautiful minimal app where users can download, create, and share AI coaches.
 
-An interface that demystifies what AI agents can do and just lets you start. Maybe there's a space to add your personal context and your values, then you just pick the coach, chat with it, and you get somewhere. My audience is obsessed with productivity, great design, and building systems. They're ready for this, and we'll champion your work with them at the end.
+An interface that demystifies what AI agents can do and just lets you start. 
+Maybe there's a space to add your personal context and your values, then you just pick the coach, chat with it, 
+and you get somewhere. 
+My audience is obsessed with productivity, great design, and building systems. 
+They're ready for this, and we'll champion your work with them at the end.
 
-And with vibe coding tools like VibeCode app, say that in a rush, Rawk and anything, building an AI app MVP has never been faster or easier. So whether you're a seasoned developer or getting started with these new AI app creation tools, this competition might just be for you. Build as an app, win twenty grand, maybe we could even ship it together.
+And with vibe coding tools like VibeCode app, say that in a rush, 
+Rawk and anything, building an AI app MVP has never been faster or easier. 
+So whether you're a seasoned developer or getting started with these new AI app creation tools, 
+this competition might just be for you. 
+Build as an app, win twenty grand, maybe we could even ship it together.
 
 
 Simon (Better Creating) : Un coaching IA minimaliste dans votre poche
 
 Regardez le résumé
 
-Le public de Simon adore la productivité, la conception de qualité et les systèmes de construction — et il souhaite apporter le coaching à plus de personnes. Créez une application mobile propre et minimaliste où les utilisateurs peuvent parcourir, créer et partager des coachs IA, ajouter un contexte/valeurs personnelles, et commencer à discuter immédiatement. Pas de configuration complexe, juste des conseils au bon moment.
+Le public de Simon adore la productivité, 
+la conception de qualité et les systèmes de construction — et il souhaite apporter le coaching à plus de personnes. 
+Créez une application mobile propre et minimaliste où les utilisateurs peuvent parcourir, 
+créer et partager des coachs IA, ajouter un contexte/valeurs personnelles, et commencer à discuter immédiatement.
+ Pas de configuration complexe, juste des conseils au bon moment.

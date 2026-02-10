@@ -4,9 +4,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/chat_provider.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
+import '../data/tts_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String coachId;
@@ -20,6 +22,12 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+  final _ttsService = TtsService();
+  String? _currentPlayingMessageId;
+  
+  // Selection mode for deleting messages
+  bool _selectionMode = false;
+  final Set<String> _selectedMessageIds = {};
 
   @override
   void dispose() {
@@ -49,6 +57,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
+  void _toggleTts(String messageId, String text) async {
+    if (_currentPlayingMessageId == messageId) {
+      // Stop if already playing this message
+      await _ttsService.stop();
+      setState(() => _currentPlayingMessageId = null);
+    } else {
+      // Start playing this message
+      await _ttsService.speak(text, messageId);
+      setState(() => _currentPlayingMessageId = messageId);
+    }
+  }
+
+  void _toggleSelectionMode(String messageId) {
+    setState(() {
+      if (_selectionMode) {
+        // Already in selection mode, toggle this message
+        if (_selectedMessageIds.contains(messageId)) {
+          _selectedMessageIds.remove(messageId);
+          // Exit selection mode if no messages selected
+          if (_selectedMessageIds.isEmpty) {
+            _selectionMode = false;
+          }
+        } else {
+          _selectedMessageIds.add(messageId);
+        }
+      } else {
+        // Enter selection mode
+        _selectionMode = true;
+        _selectedMessageIds.add(messageId);
+      }
+    });
+  }
+
+  void _cancelSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedMessageIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelectedMessages() async {
+    // TODO: Implement deletion via repository
+    final idsToDelete = _selectedMessageIds.toList();
+    print("🗑️ Deleting messages: $idsToDelete");
+    
+    // For now, just clear selection
+    _cancelSelection();
+    
+    // TODO: Call repository.deleteMessages(idsToDelete) and refresh
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider(widget.coachId));
@@ -76,8 +135,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         backgroundColor: Colors.black, // Force Black
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(20),
+            bottomLeft: Radius.circular(8),
+            bottomRight: Radius.circular(8),
           ),
         ),
         leading: IconButton(
@@ -185,7 +244,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
           color: isUser 
-              ? theme.colorScheme.primary 
+              ? (Theme.of(context).brightness == Brightness.dark 
+                  ? const Color(0xFF6366F1) // Indigo for dark mode
+                  : theme.colorScheme.primary) 
               : theme.cardTheme.color,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
@@ -204,21 +265,74 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              message.text,
-              style: GoogleFonts.poppins(
-                color: isUser ? Colors.white : theme.textTheme.bodyLarge?.color,
-                fontSize: 15,
-                height: 1.4,
+            // Message content - Markdown for AI, Text for User
+            if (isUser)
+              Text(
+                message.text,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              )
+            else
+              MarkdownBody(
+                data: message.text,
+                styleSheet: MarkdownStyleSheet(
+                  p: GoogleFonts.poppins(
+                    color: theme.textTheme.bodyLarge?.color,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                  strong: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                  em: GoogleFonts.poppins(fontStyle: FontStyle.italic),
+                  code: GoogleFonts.robotoMono(
+                    backgroundColor: Colors.grey.shade200,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('HH:mm').format(message.timestamp),
-              style: GoogleFonts.poppins(
-                color: isUser ? Colors.white.withOpacity(0.7) : Colors.grey[500],
-                fontSize: 10,
-              ),
+            // Bottom row with timestamp and TTS button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    DateFormat('HH:mm').format(message.timestamp),
+                    style: GoogleFonts.poppins(
+                      color: isUser ? Colors.white.withOpacity(0.7) : Colors.grey[500],
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+                // TTS button for AI messages only - Prominent style
+                if (!isUser)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        _currentPlayingMessageId == message.id 
+                            ? LucideIcons.volume2 
+                            : LucideIcons.volume,
+                        size: 20,
+                      ),
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      onPressed: () => _toggleTts(message.id, message.text),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -289,6 +403,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _textController,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Colors.white 
+                            : Colors.black,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Message...',
                         hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
@@ -309,22 +429,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             child: IconButton(
+              icon: Icon(
+                LucideIcons.send,
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.black 
+                    : Colors.white,
+                size: 20,
+              ),
               onPressed: () => _sendMessage(coach),
-              icon: const Icon(LucideIcons.send, size: 20),
-              color: Colors.white,
             ),
           ),
         ],
