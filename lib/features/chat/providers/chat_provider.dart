@@ -149,4 +149,62 @@ class ChatNotifier extends StateNotifier<ChatState> {
       // Optionally add an error message to the list or handle context
     }
   }
+  Future<void> initializeChat(Coach coach, {Locale? locale}) async {
+    // Only initialize if we have loaded messages and there are none
+    final currentMessages = state.messages.value;
+    if (currentMessages != null && currentMessages.isNotEmpty) {
+      return;
+    }
+
+    // Double check repo to be sure (in case of race condition or slow state update)
+    final existingParams = await _repository.getMessagesForCoach(_coachId);
+    if (existingParams.isNotEmpty) {
+      // Update state if we missed something
+      state = state.copyWith(messages: AsyncValue.data(existingParams));
+      return;
+    }
+
+    print("🤖 Initializing chat with Smart Welcome for coach: ${coach.name}");
+    
+    // Set typing indicator
+    state = state.copyWith(isTyping: true);
+
+    try {
+      final userContext = await _userContextRepository.getContext();
+      final contextString = "Nom: ${userContext.nickname}\nObjectifs: ${userContext.goals}";
+      
+      // Special prompt for introductions
+      // We explicitly ask to override the "no intro" rule for this first message
+      const introPrompt = "Démarre la conversation maintenant. Présente-toi brièvement en tant que ce coach, rappelle ta mission principale en une phrase, et souhaite la bienvenue à l'utilisateur. Reste chaleureux et motivant.";
+
+      final responseText = await _chatService.getResponse(
+        introPrompt, 
+        coach.systemPrompt, 
+        contextString,
+        locale: locale,
+      );
+
+      final aiMessage = Message(
+        id: const Uuid().v4(),
+        coachId: _coachId,
+        text: responseText,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+
+      await _repository.addMessage(aiMessage);
+      
+      // Update state
+      final current = state.messages.value ?? [];
+      state = state.copyWith(
+        messages: AsyncValue.data([...current, aiMessage]),
+        isTyping: false,
+      );
+
+    } catch (e) {
+      print("❌ Error initializing chat: $e");
+      state = state.copyWith(isTyping: false);
+    }
+  }
 }
+

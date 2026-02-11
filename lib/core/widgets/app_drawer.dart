@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../l10n/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../../features/profile/providers/user_profile_provider.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -146,6 +147,17 @@ class AppDrawer extends ConsumerWidget {
                 _buildMenuItem(
                   context,
                   ref,
+                  icon: LucideIcons.users,
+                  title: 'Mon Réseau', // TODO: Add to l10n
+                  subtitle: 'Gérer vos contacts',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/network');
+                  },
+                ),
+                _buildMenuItem(
+                  context,
+                  ref,
                   icon: LucideIcons.share2,
                   title: AppLocalizations.of(context).sharedConversations,
                   subtitle: AppLocalizations.of(context).receivedFromOthers,
@@ -172,9 +184,44 @@ class AppDrawer extends ConsumerWidget {
                   title: AppLocalizations.of(context).helpSupport,
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Show help
                   },
                 ),
+                if (ref.watch(authStateProvider).value != null) ...[
+                  const Divider(height: 32),
+                  _buildMenuItem(
+                    context,
+                    ref,
+                    icon: LucideIcons.logOut,
+                    title: 'Se déconnecter', // TODO: Add to l10n
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final shouldLogout = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Déconnexion'),
+                          content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Annuler'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (shouldLogout == true) {
+                        await ref.read(authServiceProvider).signOut();
+                        if (context.mounted) {
+                          context.go('/auth');
+                        }
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../features/sharing/models/shared_conversation.dart';
 import '../../features/home/ui/home_screen.dart';
 import '../../features/coach/ui/create_coach_screen.dart';
 import '../../features/chat/ui/chat_screen.dart';
@@ -14,6 +15,7 @@ import '../../features/chat/ui/chat_list_screen.dart';
 import '../../features/onboarding/ui/onboarding_screen.dart';
 import '../../features/auth/ui/auth_screen.dart';
 import '../../features/auth/ui/biometric_login_screen.dart';
+import '../../features/network/ui/network_screen.dart';
 import '../../features/splash/ui/splash_screen.dart';
 import '../../features/home/ui/main_screen.dart';
 
@@ -48,6 +50,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
       ),
+      GoRoute(
+        path: '/network',
+        name: 'network',
+        builder: (context, state) => const NetworkScreen(),
+      ),
+      // Force Router Update
       
       // Main Application Shell
       StatefulShellRoute.indexedStack(
@@ -98,7 +106,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     name: 'view-shared-conversation',
                     builder: (context, state) {
                       final id = state.pathParameters['id']!;
-                      return ViewSharedConversationScreen(shareId: id);
+                      final sharedConv = state.extra as SharedConversation?;
+                      return ViewSharedConversationScreen(
+                        shareId: id,
+                        initialConversation: sharedConv,
+                      );
                     },
                   ),
                 ],

@@ -26,4 +26,19 @@ class Message {
     required this.isUser,
     required this.timestamp,
   });
+  Message copyWith({
+    String? id,
+    String? coachId,
+    String? text,
+    bool? isUser,
+    DateTime? timestamp,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      coachId: coachId ?? this.coachId,
+      text: text ?? this.text,
+      isUser: isUser ?? this.isUser,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
 }

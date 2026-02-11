@@ -15,6 +15,7 @@ class SupabaseSharingService {
     required String coachAvatar,
     required List<Message> messages,
     String? title,
+    String? recipientId, // [NEW] Direct share
   }) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -40,6 +41,7 @@ class SupabaseSharingService {
         'coach_avatar': coachAvatar,
         'messages': messagesJson,
         'title': title,
+        'recipient_id': recipientId, // [NEW]
       });
 
       print('✅ Conversation uploaded: $shareId');
@@ -47,6 +49,62 @@ class SupabaseSharingService {
     } catch (e) {
       print('❌ Error uploading conversation: $e');
       rethrow;
+    }
+  }
+
+  /// Get conversations shared with me (Direct Share)
+  Future<List<SharedConversation>> getConversationsSharedWithMe() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      // Fetch conversations where recipient_id == me
+      final response = await _supabase
+          .from('shared_conversations')
+          .select('*, users:user_id(name)') // Join to get sender name
+          .eq('recipient_id', userId)
+          .order('shared_at', ascending: false);
+
+      final List<SharedConversation> conversations = (response as List).map((data) {
+        final messagesJson = data['messages'] as List<dynamic>;
+        final messages = messagesJson.map((msgJson) {
+          return Message(
+            id: msgJson['id'] as String,
+            text: msgJson['text'] as String,
+            isUser: msgJson['isUser'] as bool,
+            timestamp: DateTime.parse(msgJson['timestamp'] as String),
+            coachId: '',
+          );
+        }).toList();
+
+        final coach = Coach(
+          id: '',
+          name: data['coach_name'] as String,
+          description: 'Conversation partagée',
+          systemPrompt: '',
+          avatarIcon: data['coach_avatar'] as String,
+        );
+        
+        // Get sender name safely
+        String senderName = 'Utilisateur';
+        if (data['users'] != null) {
+          senderName = data['users']['name'] ?? 'Utilisateur';
+        }
+
+        return SharedConversation(
+          id: data['id'] as String,
+          sharedBy: senderName, // Real sender name
+          coach: coach,
+          messages: messages,
+          title: data['title'] as String?,
+          sharedAt: DateTime.parse(data['shared_at'] as String),
+        );
+      }).toList();
+
+      return conversations;
+    } catch (e) {
+      print('❌ Error fetching shared with me: $e');
+      return [];
     }
   }
 

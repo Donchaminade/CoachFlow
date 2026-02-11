@@ -33,6 +33,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
   String? _errorMessage;
   double _passwordStrength = 0.0;
   String _passwordStrengthText = '';
+  
+  bool _canUseBiometric = false;
+
+  bool _isDeviceSupported = false;
+  bool _hasSavedCredentials = false;
+  String _biometricName = 'Biométrie';
 
 
 
@@ -176,6 +182,26 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
     
     // Listen to password changes for strength indicator
     _passwordController.addListener(_updatePasswordStrength);
+    
+    _checkBiometricAvailability();
+  }
+  
+  Future<void> _checkBiometricAvailability() async {
+    final secureStorage = ref.read(secureStorageServiceProvider);
+    final biometricService = ref.read(biometricAuthServiceProvider);
+    
+    final hasCredentials = await secureStorage.hasSavedCredentials();
+    final isSupported = await biometricService.isDeviceSupported();
+    final name = await biometricService.getBiometricDisplayName();
+    
+    if (mounted) {
+      setState(() {
+        _hasSavedCredentials = hasCredentials;
+        _isDeviceSupported = isSupported;
+        _biometricName = name;
+        _canUseBiometric = hasCredentials && isSupported;
+      });
+    }
   }
   
   void _updatePasswordStrength() {
@@ -432,6 +458,49 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             },
           ),
           
+          // Old button removed
+          const SizedBox(height: 8),
+          
+          if (_isDeviceSupported) ...[
+            const SizedBox(height: 24),
+            Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    if (_hasSavedCredentials) {
+                      context.push('/biometric-login');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Veuillez vous connecter une première fois pour activer la biométrie',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    _getBiometricIcon(_biometricName),
+                    size: 32,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  tooltip: 'Se connecter avec $_biometricName',
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
+            ),
+          ],
+          
           if (_errorMessage != null) ...[
             const SizedBox(height: 16),
             Container(
@@ -684,5 +753,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
         ],
       ),
     );
+  }
+  IconData _getBiometricIcon(String name) {
+    if (name.toLowerCase().contains('face')) return LucideIcons.scanFace;
+    if (name.toLowerCase().contains('iris')) return LucideIcons.eye;
+    return LucideIcons.fingerprint;
   }
 }

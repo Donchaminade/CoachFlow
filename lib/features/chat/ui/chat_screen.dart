@@ -16,6 +16,7 @@ import '../models/message.dart';
 import '../data/message_repository.dart';
 import '../data/tts_service.dart';
 import '../../sharing/ui/share_conversation_dialog.dart';
+import '../../sharing/ui/share_with_contact_dialog.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String coachId;
@@ -35,6 +36,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   // Selection mode for deleting messages
   bool _selectionMode = false;
   final Set<String> _selectedMessageIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger smart welcome if chat is empty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndInitializeChat();
+    });
+  }
+
+  void _checkAndInitializeChat() {
+    final coaches = ref.read(coachesProvider).valueOrNull;
+    final coach = coaches?.firstWhere((c) => c.id == widget.coachId, orElse: () => Coach.empty());
+    
+    if (coach != null && coach.id.isNotEmpty) {
+      final locale = ref.read(localeProvider);
+      ref.read(chatProvider(widget.coachId).notifier).initializeChat(coach, locale: locale);
+    }
+  }
 
   @override
   void dispose() {
@@ -362,6 +382,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.send, color: Colors.white), // Direct Share Icon
+            tooltip: 'Envoyer à un contact',
+            onPressed: () {
+              final authService = ref.read(authServiceProvider);
+              if (!authService.isAuthenticated) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Connexion requise pour partager')),
+                );
+                return;
+              }
+
+              final messages = chatState.messages.value ?? [];
+              if (messages.isEmpty) return;
+
+              showDialog(
+                context: context,
+                builder: (context) => ShareWithContactDialog(
+                  coach: coach,
+                  messages: messages,
+                ),
+              );
+            },
+          ),
+
           IconButton(
             icon: const Icon(LucideIcons.share2, color: Colors.white),
             onPressed: () {

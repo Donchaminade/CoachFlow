@@ -6,9 +6,27 @@ import '../../auth/providers/auth_provider.dart';
 
 final sharedConversationRepositoryProvider = Provider((ref) => SharedConversationRepository());
 
+
 final sharedConversationsProvider = FutureProvider<List<SharedConversation>>((ref) async {
+  // 1. Local (Hive)
   final repository = ref.watch(sharedConversationRepositoryProvider);
-  return await repository.getAllShared();
+  final localConversations = await repository.getAllShared();
+
+  // 2. Remote (Supabase - Direct Share)
+  final sharingService = ref.read(supabaseSharingServiceProvider);
+  final remoteConversations = await sharingService.getConversationsSharedWithMe();
+
+  // 3. Merge & Sort
+  final allShared = [...localConversations];
+  for (var remote in remoteConversations) {
+    // Avoid duplicates if we accidentally have it locally too
+    if (!allShared.any((c) => c.id == remote.id)) {
+      allShared.add(remote);
+    }
+  }
+  
+  allShared.sort((a, b) => b.sharedAt.compareTo(a.sharedAt));
+  return allShared;
 });
 
 final sharedConversationCountProvider = FutureProvider<int>((ref) async {

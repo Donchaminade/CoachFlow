@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:local_auth/local_auth.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
 
 class BiometricLoginScreen extends ConsumerStatefulWidget {
@@ -38,7 +38,7 @@ class _BiometricLoginScreenState extends ConsumerState<BiometricLoginScreen> {
       
       // Authenticate
       final authenticated = await biometricService.authenticate(
-        reason: 'Authentifiez-vous pour accéder à CoachFlow',
+        reason: 'Bob retour ! Authentifiez-vous pour continuer.',
       );
 
       if (authenticated) {
@@ -67,7 +67,7 @@ class _BiometricLoginScreenState extends ConsumerState<BiometricLoginScreen> {
         }
       } else {
         setState(() {
-          _errorMessage = 'Authentification échouée';
+          _errorMessage = 'Authentification annulée ou échouée';
         });
       }
     } catch (e) {
@@ -76,7 +76,9 @@ class _BiometricLoginScreenState extends ConsumerState<BiometricLoginScreen> {
         _errorMessage = 'Erreur lors de l\'authentification';
       });
     } finally {
-      setState(() => _isAuthenticating = false);
+      if (mounted) {
+        setState(() => _isAuthenticating = false);
+      }
     }
   }
 
@@ -85,128 +87,196 @@ class _BiometricLoginScreenState extends ConsumerState<BiometricLoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              
-              // Logo
-              Text(
-                '🧠',
-                style: const TextStyle(fontSize: 80),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark 
+                  ? [const Color(0xFF1A1A1A), const Color(0xFF000000)]
+                  : [const Color(0xFFFFFFFF), const Color(0xFFF5F5F7)],
               ),
-              const SizedBox(height: 24),
-              
-              Text(
-                'CoachFlow',
-                style: GoogleFonts.poppins(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+          ),
+          
+          // Background accents (Circles)
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).primaryColor.withOpacity(0.05),
               ),
-              const SizedBox(height: 12),
-              
-              Text(
-                'Bon retour !',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).primaryColor.withOpacity(0.05),
               ),
-              
-              const SizedBox(height: 60),
-              
-              // Biometric button
-              FutureBuilder<String>(
-                future: ref.read(biometricAuthServiceProvider).getBiometricDisplayName(),
-                builder: (context, snapshot) {
-                  final biometricName = snapshot.data ?? 'Biométrie';
-                  
-                  return Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _isAuthenticating ? null : _authenticateWithBiometric,
-                        child: Container(
-                          width: 100,
-                          height: 100,
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Card(
+                  elevation: 8,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  color: Theme.of(context).cardColor.withOpacity(0.95),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min, // Wrap content
+                      children: [
+                        // Logo / Icon
+                        Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 3,
-                            ),
+                            color: Theme.of(context).scaffoldBackgroundColor,
                           ),
-                          child: _isAuthenticating
-                              ? Center(
-                                  child: CircularProgressIndicator(
+                          child: const Text('🧠', style: TextStyle(fontSize: 48)),
+                        ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                        
+                        const SizedBox(height: 24),
+                        
+                        Text(
+                          'CoachFlow',
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                        
+                        const SizedBox(height: 8),
+                        
+                        Text(
+                          'Bon retour !', // Restored
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+                        
+                        const SizedBox(height: 40),
+                        
+                        // Biometric Area
+                        FutureBuilder<String>(
+                          future: ref.read(biometricAuthServiceProvider).getBiometricDisplayName(),
+                          builder: (context, snapshot) {
+                            final biometricName = snapshot.data ?? 'Biométrie';
+                            
+                            return Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: _isAuthenticating ? null : _authenticateWithBiometric,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(_isAuthenticating ? 0.2 : 0.1),
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.primary.withOpacity(_isAuthenticating ? 1.0 : 0.5),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        if (_isAuthenticating)
+                                          SizedBox(
+                                            width: 100,
+                                            height: 100,
+                                            child: CircularProgressIndicator(
+                                              color: Theme.of(context).colorScheme.primary,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        Icon(
+                                          _getBiometricIcon(snapshot.data),
+                                          size: 40,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ).animate(
+                                          onPlay: (c) => _isAuthenticating ? c.repeat(reverse: true) : c.stop(),
+                                        ).scale(begin: const Offset(1, 1), end: const Offset(0.9, 0.9), duration: 1000.ms),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Text(
+                                  _isAuthenticating ? 'Vérification...' : 'Se connecter avec $biometricName',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                     color: Theme.of(context).colorScheme.primary,
                                   ),
-                                )
-                              : Icon(
-                                  _getBiometricIcon(snapshot.data),
-                                  size: 50,
-                                  color: Theme.of(context).colorScheme.primary,
                                 ),
+                              ],
+                            );
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      Text(
-                        'Se connecter avec $biometricName',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        
+                        const SizedBox(height: 24),
+
+                        // Error Message
+                        if (_errorMessage.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _errorMessage,
+                              style: GoogleFonts.poppins(color: Colors.red, fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
+                          ).animate().fadeIn(),
+                        
+                        const Divider(),
+                        
+                        // Alternative Button
+                        TextButton(
+                          onPressed: () => context.go('/auth'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          child: Text(
+                            'Utiliser un mot de passe',
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              
-              if (_errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.alertCircle, color: Colors.red, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        _errorMessage,
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.red),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              
-              const Spacer(),
-              
-              // Alternative login
-              TextButton.icon(
-                onPressed: () => context.pushNamed('auth'),
-                icon: const Icon(LucideIcons.logIn),
-                label: Text(
-                  'Se connecter avec un autre compte',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                ),
+                ).animate().slideY(begin: 0.1, end: 0, duration: 400.ms).fadeIn(),
               ),
-              
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -214,14 +284,13 @@ class _BiometricLoginScreenState extends ConsumerState<BiometricLoginScreen> {
   IconData _getBiometricIcon(String? biometricName) {
     if (biometricName == null) return LucideIcons.fingerprint;
     
-    if (biometricName.contains('Face')) {
+    final lowerName = biometricName.toLowerCase();
+    if (lowerName.contains('face') || lowerName.contains('visage')) {
       return LucideIcons.scanFace;
-    } else if (biometricName.contains('Empreinte')) {
-      return LucideIcons.fingerprint;
-    } else if (biometricName.contains('iris')) {
+    } else if (lowerName.contains('iris')) {
       return LucideIcons.eye;
     } else {
-      return LucideIcons.lock;
+      return LucideIcons.fingerprint;
     }
   }
 }

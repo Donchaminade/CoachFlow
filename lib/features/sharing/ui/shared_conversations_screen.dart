@@ -134,7 +134,11 @@ class SharedConversationsScreen extends ConsumerWidget {
                   ),
                   trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
-                    context.push('/home/shared-conversations/${conv.id}');
+                    context.pushNamed(
+                      'view-shared-conversation',
+                      pathParameters: {'id': conv.id},
+                      extra: conv,
+                    );
                   },
                 ),
               ).animate().fadeIn(delay: (50 * index).ms).slideX(begin: 0.1, end: 0);
