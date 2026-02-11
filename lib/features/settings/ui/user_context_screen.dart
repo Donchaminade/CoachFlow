@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../settings/providers/user_context_provider.dart';
 import '../../settings/models/user_context.dart';
 
@@ -46,6 +49,8 @@ class _UserContextScreenState extends ConsumerState<UserContextScreen> {
   @override
   Widget build(BuildContext context) {
     final contextAsync = ref.watch(userContextProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // Initialize controllers with data once loaded
     contextAsync.whenData((userContext) {
@@ -59,18 +64,35 @@ class _UserContextScreenState extends ConsumerState<UserContextScreen> {
     });
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Mon Contexte'),
+        title: Text(
+          'Mon Contexte',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: Colors.black, // Force black
+        foregroundColor: Colors.white, // Force white icons
+        elevation: 0,
+        centerTitle: true,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(LucideIcons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            color: Colors.white,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _saveContext,
+            color: Colors.white,
           ),
         ],
       ),
       body: contextAsync.when(
         data: (data) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -80,60 +102,104 @@ class _UserContextScreenState extends ConsumerState<UserContextScreen> {
                 'Ces informations sont partagées avec TOUS vos coachs. Plus vous êtes précis, plus leurs conseils seront pertinents.',
               ),
               const SizedBox(height: 24),
-              TextFormField(
+              _buildTextField(
                 controller: _nicknameController,
-                decoration: const InputDecoration(
-                  labelText: 'Comment je m\'appelle',
-                  hintText: 'Votre prénom ou surnom',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
+                label: 'Comment je m\'appelle',
+                hint: 'Votre prénom ou surnom',
+                icon: Icons.person_outline,
+                theme: theme,
+                isDark: isDark,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _buildTextField(
                 controller: _goalsController,
-                decoration: const InputDecoration(
-                  labelText: 'Mes Objectifs Actuels',
-                  hintText: 'Ex: Lancer mon entreprise, courir un marathon...',
-                  prefixIcon: Icon(Icons.flag_outlined),
-                  alignLabelWithHint: true,
-                ),
+                label: 'Mes Objectifs Actuels',
+                hint: 'Ex: Lancer mon entreprise, courir un marathon...',
+                icon: Icons.flag_outlined,
                 maxLines: 3,
+                theme: theme,
+                isDark: isDark,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _buildTextField(
                 controller: _valuesController,
-                decoration: const InputDecoration(
-                  labelText: 'Mes Valeurs / Principes',
-                  hintText: 'Ex: Honnêteté, Famille avant tout, Minimalisme...',
-                  prefixIcon: Icon(Icons.diamond_outlined),
-                  alignLabelWithHint: true,
-                ),
+                label: 'Mes Valeurs / Principes',
+                hint: 'Ex: Honnêteté, Famille avant tout, Minimalisme...',
+                icon: Icons.diamond_outlined,
                 maxLines: 3,
+                theme: theme,
+                isDark: isDark,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _buildTextField(
                 controller: _constraintsController,
-                decoration: const InputDecoration(
-                  labelText: 'Mes Contraintes / Contexte',
-                  hintText: 'Ex: J\'ai 2 enfants, je travaille de nuit, budget limité...',
-                  prefixIcon: Icon(Icons.warning_amber_outlined),
-                  alignLabelWithHint: true,
-                ),
+                label: 'Mes Contraintes / Contexte',
+                hint: 'Ex: J\'ai 2 enfants, je travaille de nuit, budget limité...',
+                icon: Icons.warning_amber_outlined,
                 maxLines: 3,
+                theme: theme,
+                isDark: isDark,
               ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                height: 56,
+                child: ElevatedButton.icon(
                   onPressed: _saveContext,
-                  child: const Text('Sauvegarder mon Profil'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: isDark ? Colors.black : Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 4,
+                  ),
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(
+                    'Sauvegarder mon Profil',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Erreur: $err')),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      style: GoogleFonts.poppins(),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.poppins(),
+        hintText: hint,
+        hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
+        prefixIcon: Icon(icon),
+        alignLabelWithHint: maxLines > 1,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+        ),
+        filled: true,
+        fillColor: theme.cardColor,
       ),
     );
   }

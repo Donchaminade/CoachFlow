@@ -8,6 +8,7 @@ import '../l10n/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../../features/profile/providers/user_profile_provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../router/app_router.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -186,42 +187,100 @@ class AppDrawer extends ConsumerWidget {
                     Navigator.pop(context);
                   },
                 ),
-                if (ref.watch(authStateProvider).value != null) ...[
-                  const Divider(height: 32),
-                  _buildMenuItem(
-                    context,
-                    ref,
-                    icon: LucideIcons.logOut,
-                    title: 'Se déconnecter', // TODO: Add to l10n
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final shouldLogout = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Déconnexion'),
-                          content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Annuler'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      );
 
-                      if (shouldLogout == true) {
-                        await ref.read(authServiceProvider).signOut();
-                        if (context.mounted) {
-                          context.go('/auth');
-                        }
-                      }
-                    },
+                          // Logout Button
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: () async {
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Déconnexion'),
+                    content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Annuler'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
                   ),
-                ],
+                );
+
+                if (shouldLogout == true) {
+                  await ref.read(authServiceProvider).signOut();
+                  // Check if biometric is enabled, if so, we might want to clear credentials or kept them based on "remember me" logic
+                  // For now, standard sign out
+                  if (context.mounted) {
+                    context.go('/auth');
+                  }
+                }
+              },
+              icon: const Icon(LucideIcons.logOut, color: Colors.red),
+              label: Text(
+                'Se déconnecter',
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.red.withOpacity(0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+                // if (ref.watch(authStateProvider).value != null) ...[
+                //   const Divider(height: 32),
+                //   _buildMenuItem(
+                //     context,
+                //     ref,
+                //     icon: LucideIcons.logOut,
+                //     title: 'Se déconnecter', // TODO: Add to l10n
+                //     onTap: () async {
+                //       // Capture services immediately to avoid context/disposal issues
+                //       final authService = ref.read(authServiceProvider);
+                //       final router = ref.read(routerProvider);
+
+                //       // Show confirmation dialog (Drawer stays open behind it)
+                //       final shouldLogout = await showDialog<bool>(
+                //         context: context,
+                //         builder: (context) => AlertDialog(
+                //           title: const Text('Déconnexion'),
+                //           content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                //           actions: [
+                //             TextButton(
+                //               onPressed: () => Navigator.pop(context, false),
+                //               child: const Text('Annuler'),
+                //             ),
+                //             TextButton(
+                //               onPressed: () => Navigator.pop(context, true),
+                //               child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
+                //             ),
+                //           ],
+                //         ),
+                //       );
+
+                //       // Process logout if confirmed
+                //       if (shouldLogout == true) {
+                //         try {
+                //           await authService.signOut();
+                //         } catch (e) {
+                //           debugPrint('Logout error: $e');
+                //         } finally {
+                //           // Navigate to auth screen (this will automatically close the drawer)
+                //           router.go('/auth');
+                //         }
+                //       }
+                //     },
+                //   ),
+                // ],
               ],
             ),
           ),

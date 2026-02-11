@@ -8,11 +8,49 @@ import '../../../core/widgets/app_drawer.dart';
 import '../providers/network_provider.dart';
 import '../../auth/models/auth_user.dart';
 
-class NetworkScreen extends ConsumerWidget {
+class NetworkScreen extends ConsumerStatefulWidget {
   const NetworkScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NetworkScreen> createState() => _NetworkScreenState();
+}
+
+class _NetworkScreenState extends ConsumerState<NetworkScreen> {
+  bool _isSearchVisible = false;
+  late TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearchVisible = !_isSearchVisible;
+      if (!_isSearchVisible) {
+        _searchController.clear();
+        ref.read(searchQueryProvider.notifier).state = '';
+      }
+    });
+  }
+
+  void _hideSearch() {
+    setState(() {
+      _isSearchVisible = false;
+      _searchController.clear();
+      ref.read(searchQueryProvider.notifier).state = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final contactsAsync = ref.watch(contactsProvider);
     final searchQuery = ref.watch(searchQueryProvider);
     final searchResultsAsync = ref.watch(searchResultsProvider);
@@ -33,53 +71,70 @@ class NetworkScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.home),
-            tooltip: 'Accueil',
-            onPressed: () => context.go('/home'),
+            icon: Icon(_isSearchVisible ? LucideIcons.x : LucideIcons.search),
+            tooltip: _isSearchVisible ? 'Fermer la recherche' : 'Rechercher',
+            onPressed: _toggleSearch,
           ),
+          if (!_isSearchVisible)
+            IconButton(
+              icon: const Icon(LucideIcons.home),
+              tooltip: 'Accueil',
+              onPressed: () => context.go('/home'),
+            ),
         ],
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // 1. Search Bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+          // 1. Search Bar (Animated)
+          AnimatedCrossFade(
+            firstChild: const SizedBox(height: 0, width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: (value) => ref.read(searchQueryProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher un contact...',
+                    hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
+                    prefixIcon: const Icon(LucideIcons.search, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: const Icon(LucideIcons.x, size: 18),
+                      onPressed: _hideSearch,
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   ),
-                ],
-              ),
-              child: TextField(
-                onChanged: (value) => ref.read(searchQueryProvider.notifier).state = value,
-                decoration: InputDecoration(
-                  hintText: 'Rechercher un contact...',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
-                  prefixIcon: const Icon(LucideIcons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 ),
               ),
             ),
+            crossFadeState: _isSearchVisible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: 300.ms,
           ),
 
           // 2. Content
@@ -202,6 +257,8 @@ class NetworkScreen extends ConsumerWidget {
                     await ref.read(networkRepositoryProvider).addContact(user.id);
                     // Clear search
                     ref.read(searchQueryProvider.notifier).state = '';
+                    _searchController.clear(); 
+                    setState(() => _isSearchVisible = false);
                     // Refresh contacts
                     ref.invalidate(contactsProvider);
                     
