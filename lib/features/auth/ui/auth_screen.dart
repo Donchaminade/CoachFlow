@@ -408,6 +408,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
   }
 
   Widget _buildSignInForm() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Form(
       key: _signInFormKey,
       child: Column(
@@ -461,45 +463,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
           // Old button removed
           const SizedBox(height: 8),
           
-          if (_isDeviceSupported) ...[
-            const SizedBox(height: 24),
-            Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  border: Border.all(
-                    color: Theme.of(context).primaryColor.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    if (_hasSavedCredentials) {
-                      context.push('/biometric-login');
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Veuillez vous connecter une première fois pour activer la biométrie',
-                            style: GoogleFonts.poppins(),
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-                  },
-                  icon: Icon(
-                    _getBiometricIcon(_biometricName),
-                    size: 32,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  tooltip: 'Se connecter avec $_biometricName',
-                  padding: const EdgeInsets.all(16),
-                ),
-              ),
-            ),
-          ],
+
           
           if (_errorMessage != null) ...[
             const SizedBox(height: 16),
@@ -570,6 +534,46 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
               style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
             ),
           ),
+
+          if (_isDeviceSupported) ...[
+            const SizedBox(height: 48), // Add more space to push it down
+            Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                  border: Border.all(
+                    color: isDark ? Colors.white : Colors.black,
+                    width: 2,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    if (_hasSavedCredentials) {
+                      context.push('/biometric-login');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Veuillez vous connecter une première fois pour activer la biométrie',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    _getBiometricIcon(_biometricName),
+                    size: 32,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  tooltip: 'Se connecter avec $_biometricName',
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
