@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../providers/chat_provider.dart';
 
@@ -10,26 +11,35 @@ class BytezChatService implements ChatService {
   BytezChatService(this.apiKey);
 
   @override
-  Future<String> getResponse(String prompt, String systemPrompt, String userContext) async {
+  Future<String> getResponse(
+    String prompt,
+    String systemPrompt,
+    String userContext, {
+    Locale? locale,
+  }) async {
     try {
       // Construct messages array with system context
       final messages = <Map<String, String>>[];
       
+      // Determine language instruction based on locale
+      final languageCode = locale?.languageCode ?? 'fr';
+      final languageInstruction = languageCode == 'fr'
+          ? 'TU DOIS RÉPONDRE UNIQUEMENT EN FRANÇAIS. JAMAIS EN ANGLAIS.'
+          : 'YOU MUST RESPOND ONLY IN ENGLISH. NEVER IN FRENCH.';
+      
       // Add system instruction as first message
       final systemMessage = StringBuffer();
       systemMessage.writeln("RÈGLE ABSOLUE - LANGUE:");
-      systemMessage.writeln("TU DOIS TOUJOURS répondre dans la MÊME LANGUE que l'utilisateur.");
-      systemMessage.writeln("Si l'utilisateur écrit en FRANÇAIS, tu DOIS répondre en FRANÇAIS.");
-      systemMessage.writeln("Si l'utilisateur écrit en ANGLAIS, tu DOIS répondre en ANGLAIS.");
-      systemMessage.writeln("JAMAIS d'exceptions à cette règle.");
-      systemMessage.writeln("\nINSTRUCTION SYSTÈME (Tu es ce coach):");
+      systemMessage.writeln(languageInstruction);
+      systemMessage.writeln("QUAND L'UTILISATEUR T'ÉCRIS, VAS DROIT AU BUT SANS TE PRÉSENTER.");
+      systemMessage.writeln("\nINSTRUCTION SYSTÈME (TU ES CE COACH):");
       systemMessage.writeln(systemPrompt);
       systemMessage.writeln("\nSTYLE DE RÉPONSE:");
-      systemMessage.writeln("- Sois CONCIS et DIRECT (max 3-4 phrases courtes)");
+      systemMessage.writeln("- Sois CONCIS, DIRECT, REALISTE comme un COACH");
       systemMessage.writeln("- Donne UN exemple concret et réel à chaque fois");
       systemMessage.writeln("- Utilise le markdown pour structurer (gras pour mots-clés)");
-      systemMessage.writeln("- Évite les longs paragraphes, préfère les listes courtes");
-      systemMessage.writeln("- Tes réponses doivent être actionnables immédiatement");
+      systemMessage.writeln("- Évite les longs paragraphes, PRÉFÈRE les listes courtes");
+      systemMessage.writeln("- Tes réponses doivent être ACTIONNABLES IMMÉDIATEMENT");
       
       if (userContext.isNotEmpty) {
         systemMessage.writeln("\nCONTEXTE UTILISATEUR:");

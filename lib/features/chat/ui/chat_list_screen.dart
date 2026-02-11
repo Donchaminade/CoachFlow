@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
 import '../providers/conversation_provider.dart';
@@ -18,6 +19,7 @@ class ChatListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
+      drawer: const AppDrawer(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -27,6 +29,12 @@ class ChatListScreen extends ConsumerWidget {
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(8),
                 bottomRight: Radius.circular(8),
+              ),
+            ),
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(LucideIcons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
             title: Text(

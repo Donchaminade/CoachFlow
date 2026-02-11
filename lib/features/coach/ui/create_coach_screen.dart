@@ -19,7 +19,7 @@ class _CreateCoachScreenState extends ConsumerState<CreateCoachScreen> {
   final _promptController = TextEditingController();
   String _selectedAvatar = '🤖';
 
-  final List<String> _avatars = ['🤖', '🧠', '💼', '💪', '🧘', '🎓', '🎨', '🚀'];
+  final List<String> _avatars = ['🤖', '🧠', '💼', '💪', '🧘', '🎓', '🎨', '🚀', '🍏','👨‍🍳', '🧪'];
 
   @override
   void dispose() {

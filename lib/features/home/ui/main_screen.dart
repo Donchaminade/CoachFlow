@@ -4,34 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:ui'; // For ClipRRect and BackdropFilter
 
-import 'home_screen.dart';
-import '../../chat/ui/chat_list_screen.dart'; 
-import '../../settings/ui/user_context_screen.dart';
+class MainScreen extends ConsumerWidget {
+  final StatefulNavigationShell navigationShell;
 
-class MainScreen extends ConsumerStatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  ConsumerState<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends ConsumerState<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ChatListScreen(),
-    const Center(child: Text("Historique - Bientôt disponible")), // Placeholder for History
-    const UserContextScreen(), 
-  ];
+  const MainScreen({
+    super.key,
+    required this.navigationShell,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       extendBody: true, // Important for glassmorphism execution
-      body: _screens[_currentIndex],
+      body: navigationShell,
 
       bottomNavigationBar: Container(
         padding: const EdgeInsets.only(top: 10, bottom: 20, left: 20, right: 20),
@@ -48,10 +33,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNavItem(0, LucideIcons.home, "Accueil"),
-                  _buildNavItem(1, LucideIcons.messageCircle, "Messages"),
-                  _buildNavItem(2, LucideIcons.history, "Historique"), // New Item
-                  _buildNavItem(3, LucideIcons.user, "Profil"),
+                  _buildNavItem(context, 0, LucideIcons.home, "Accueil"),
+                  _buildNavItem(context, 1, LucideIcons.messageCircle, "Messages"),
+                  _buildNavItem(context, 2, LucideIcons.users, "Partager"),
+                  _buildNavItem(context, 3, LucideIcons.user, "Profil"),
                 ],
               ),
             ),
@@ -61,15 +46,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
+  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
+    final isSelected = navigationShell.currentIndex == index;
     // User requested White icons/text
     final color = isSelected 
         ? Colors.white 
         : Colors.white.withOpacity(0.5);
 
     return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => _onTap(context, index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -85,6 +70,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _onTap(BuildContext context, int index) {
+    // When navigating to a new branch, it's recommended to use the goBranch
+    // method, as doing so maintains the state of the navigation stack.
+    navigationShell.goBranch(
+      index,
+      // A common pattern when using bottom navigation bars is to support
+      // navigating to the initial location when tapping the item that is
+      // already active. This example demonstrates how to support this behavior,
+      // using the initialLocation parameter of goBranch.
+      initialLocation: index == navigationShell.currentIndex,
     );
   }
 }

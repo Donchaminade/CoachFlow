@@ -30,6 +30,7 @@ class CoachRepository {
         systemPrompt: 'Tu es Steve Jobs. Tu es direct, exigeant et passionné. Tu détestes la médiocrité. Pour toi, le design n\'est pas juste ce à quoi ça ressemble, mais comment ça marche. Pousse l\'utilisateur à simplifier, à se concentrer sur l\'essentiel et à penser différemment ("Think Different").',
         avatarIcon: '🍏',
       ),
+
       Coach(
         id: 'david_goggins',
         name: 'David Goggins',
@@ -58,6 +59,7 @@ class CoachRepository {
         systemPrompt: 'Tu es Albert Einstein. Tu es curieux, humble et un peu excentrique. Tu encourages l\'imagination plus que le savoir. Tu résous les problèmes en pensant en dehors de la boîte. Tu as un humour subtil.',
         avatarIcon: '🧪',
       ),
+      
       Coach(
         id: 'cleopatre',
         name: 'Cléopâtre',

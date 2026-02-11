@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../models/message.dart';
 import '../data/message_repository.dart';
 import '../../coach/models/coach.dart';
@@ -9,13 +11,23 @@ import '../data/bytez_chat_service.dart';
 
 // Service Interface
 abstract class ChatService {
-  Future<String> getResponse(String prompt, String systemPrompt, String userContext);
+  Future<String> getResponse(
+    String prompt,
+    String systemPrompt,
+    String userContext, {
+    Locale? locale,
+  });
 }
 
 // Mock Implementation (fallback)
 class MockChatService implements ChatService {
   @override
-  Future<String> getResponse(String prompt, String systemPrompt, String userContext) async {
+  Future<String> getResponse(
+    String prompt,
+    String systemPrompt,
+    String userContext, {
+    Locale? locale,
+  }) async {
     await Future.delayed(const Duration(seconds: 1)); // Simulate network
     
     // Simple logic to show that context is being used
@@ -82,7 +94,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(messages: msgs);
   }
 
-  Future<void> sendMessage(String text, Coach coach) async {
+  Future<void> sendMessage(String text, Coach coach, {Locale? locale}) async {
     final currentMessages = state.messages.value ?? [];
     
     // 1. Add User Message
@@ -108,7 +120,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final userContext = await _userContextRepository.getContext();
       final contextString = "Nom: ${userContext.nickname}\nObjectifs: ${userContext.goals}\nValeurs: ${userContext.values}\nContraintes: ${userContext.constraints}";
       
-      final responseText = await _chatService.getResponse(text, coach.systemPrompt, contextString);
+      final responseText = await _chatService.getResponse(
+        text,
+        coach.systemPrompt,
+        contextString,
+        locale: locale,
+      );
       
       final aiMessage = Message(
         id: const Uuid().v4(),

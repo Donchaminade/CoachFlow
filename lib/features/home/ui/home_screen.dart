@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/l10n/app_localizations.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
 import 'widgets/featured_carousel.dart';
@@ -17,6 +19,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
+      drawer: const AppDrawer(),
       body: coachesAsync.when(
         data: (coaches) {
           return CustomScrollView(
@@ -33,6 +36,12 @@ class HomeScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(8),
                     bottomRight: Radius.circular(8),
+                  ),
+                ),
+                leading: Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(LucideIcons.menu, color: Colors.white),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
                 ),
                 title: Text(
@@ -55,17 +64,6 @@ class HomeScreen extends ConsumerWidget {
                       onPressed: () => context.pushNamed('create-coach'),
                     ),
                   ),
-                  Container(
-                    margin: const EdgeInsets.only(right: 16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardTheme.color,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Icon(LucideIcons.settings, color: Theme.of(context).colorScheme.onSurface),
-                      onPressed: () => context.pushNamed('user-context'),
-                    ),
-                  ),
                 ],
               ),
 
@@ -84,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                     child: Text(
-                      "Mes Coachs",
+                      AppLocalizations.of(context).myCoaches,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
@@ -114,7 +112,7 @@ class HomeScreen extends ConsumerWidget {
                         FilledButton.icon(
                           onPressed: () => context.pushNamed('create-coach'),
                           icon: const Icon(LucideIcons.plusCircle),
-                          label: const Text('Créer un coach'),
+                          label: Text(AppLocalizations.of(context).createCoach),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),

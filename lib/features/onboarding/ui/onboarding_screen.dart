@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../../core/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -15,26 +16,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingItem> _items = [
-    OnboardingItem(
-      title: 'Bienvenue sur CoachFlow',
-      description: 'L\'application minimaliste pour discuter avec des coachs IA experts.',
-      icon: '👋',
-    ),
-    OnboardingItem(
-      title: 'Coachs Légendaires',
-      description: 'Profitez de la sagesse de personnalités comme Marc Aurèle ou créez vos propres coachs.',
-      icon: '🧠',
-    ),
-    OnboardingItem(
-      title: '100% Privé',
-      description: 'Vos conversations et vos données restent sur votre téléphone. Pas de cloud, pas de fuite.',
-      icon: '🔒',
-    ),
-  ];
-
-  void _onNext() async {
-    if (_currentPage < _items.length - 1) {
+  void _onNext(List<OnboardingItem> items) async {
+    if (_currentPage < items.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -45,13 +28,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       await box.put('onboarding_seen', true);
       
       if (mounted) {
-        context.go('/');
+        context.go('/home');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
+    final List<OnboardingItem> items = [
+      OnboardingItem(
+        title: l10n.onboardingTitle1,
+        description: l10n.onboardingDesc1,
+        icon: '👋',
+      ),
+      OnboardingItem(
+        title: l10n.onboardingTitle2,
+        description: l10n.onboardingDesc2,
+        icon: '🧠',
+      ),
+      OnboardingItem(
+        title: l10n.onboardingTitle3,
+        description: l10n.onboardingDesc3,
+        icon: '🔒',
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -60,14 +63,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _items.length,
+                itemCount: items.length,
                 onPageChanged: (index) {
                   setState(() {
                     _currentPage = index;
                   });
                 },
                 itemBuilder: (context, index) {
-                  final item = _items[index];
+                  final item = items[index];
                   return Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
@@ -109,7 +112,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Page Indicator
                   Row(
                     children: List.generate(
-                      _items.length,
+                      items.length,
                       (index) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.only(right: 8),
@@ -126,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   // Next Button
                   ElevatedButton(
-                    onPressed: _onNext,
+                    onPressed: () => _onNext(items),
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
                       padding: const EdgeInsets.all(20),

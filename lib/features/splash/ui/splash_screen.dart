@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../auth/providers/auth_provider.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -23,6 +25,25 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
+    // Check if user has biometric enabled
+    final secureStorage = ref.read(secureStorageServiceProvider);
+    final hasSavedCredentials = await secureStorage.hasSavedCredentials();
+    final biometricEnabled = await secureStorage.isBiometricEnabled();
+
+    if (hasSavedCredentials && biometricEnabled) {
+      // User has biometric setup, go to biometric login
+      context.go('/biometric-login');
+      return;
+    }
+
+    // Check if user is already authenticated
+    final authService = ref.read(authServiceProvider);
+    if (authService.isAuthenticated) {
+      context.go('/home');
+      return;
+    }
+
+    // Check onboarding
     final settingsBox = await Hive.openBox('settings');
     final onboardingSeen = settingsBox.get('onboarding_seen', defaultValue: false);
 

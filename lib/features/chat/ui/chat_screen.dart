@@ -6,12 +6,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/l10n/locale_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
 import '../models/message.dart';
 import '../data/message_repository.dart';
 import '../data/tts_service.dart';
+import '../../sharing/ui/share_conversation_dialog.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String coachId;
@@ -42,7 +46,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _sendMessage(Coach coach) {
     final text = _textController.text.trim();
     if (text.isNotEmpty) {
-      ref.read(chatProvider(widget.coachId).notifier).sendMessage(text, coach);
+      final locale = ref.read(localeProvider);
+      ref.read(chatProvider(widget.coachId).notifier).sendMessage(text, coach, locale: locale);
       _textController.clear();
       _scrollToBottom();
     }
@@ -358,8 +363,73 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(LucideIcons.moreVertical, color: Theme.of(context).colorScheme.onBackground),
-            onPressed: () {},
+            icon: const Icon(LucideIcons.share2, color: Colors.white),
+            onPressed: () {
+              final authService = ref.read(authServiceProvider);
+              if (!authService.isAuthenticated) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      'Connexion requise',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                    content: Text(
+                      'Vous devez être connecté pour partager une conversation.',
+                      style: GoogleFonts.poppins(),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Annuler',
+                          style: GoogleFonts.poppins(color: Colors.grey),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.push('/auth');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                        ),
+                        child: Text(
+                          'Se connecter',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                return;
+              }
+
+              final messages = chatState.messages.value ?? [];
+              if (messages.isNotEmpty) {
+                showDialog(
+                  context: context,
+                  builder: (context) => ShareConversationDialog(
+                    coach: coach,
+                    messages: messages,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Aucun message à partager',
+                      style: GoogleFonts.poppins(),
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
