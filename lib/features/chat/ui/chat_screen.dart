@@ -682,6 +682,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildInputArea(BuildContext context, Coach coach) {
+    final chatState = ref.watch(chatProvider(widget.coachId));
+    final isInitializing = (chatState.messages.value?.isEmpty ?? true) && chatState.isTyping;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       // Glassmorphism background for input area
@@ -689,7 +692,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
       ),
-      child: Row(
+      child: isInitializing 
+          ? _buildSkeletonInput(context)
+          : Row(
         children: [
           Expanded(
             child: Container(
@@ -745,6 +750,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSkeletonInput(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: baseColor.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(24),
+            ),
+          ).animate(onPlay: (controller) => controller.repeat())
+           .shimmer(duration: 1200.ms, color: isDark ? Colors.grey[700] : Colors.white.withOpacity(0.5)),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          height: 48,
+          width: 48,
+          decoration: BoxDecoration(
+            color: baseColor.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+        ).animate(onPlay: (controller) => controller.repeat())
+         .shimmer(duration: 1200.ms, color: isDark ? Colors.grey[700] : Colors.white.withOpacity(0.5)),
+      ],
     );
   }
 }
