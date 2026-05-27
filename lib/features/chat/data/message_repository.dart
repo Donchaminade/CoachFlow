@@ -50,6 +50,11 @@ class MessageRepository {
      await box.deleteAll(keys);
   }
 
+  Future<void> deleteAllMessages() async {
+    final box = await _box;
+    await box.clear();
+  }
+
   Future<Set<String>> getActiveCoachIds() async {
     final box = await _box;
     final activeIds = box.values.map((m) => m.coachId).toSet();

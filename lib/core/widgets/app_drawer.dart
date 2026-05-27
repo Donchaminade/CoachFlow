@@ -149,8 +149,8 @@ class AppDrawer extends ConsumerWidget {
                   context,
                   ref,
                   icon: LucideIcons.users,
-                  title: 'Mon Réseau', // TODO: Add to l10n
-                  subtitle: 'Gérer vos contacts',
+                  title: AppLocalizations.of(context).myNetwork,
+                  subtitle: AppLocalizations.of(context).manageContacts,
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/network');

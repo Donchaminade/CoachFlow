@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
 import '../providers/chat_provider.dart';
+import '../providers/conversation_provider.dart';
 
 // Provider to get active coaches only
 final historyCoachesProvider = FutureProvider<List<Coach>>((ref) async {
@@ -19,6 +21,42 @@ final historyCoachesProvider = FutureProvider<List<Coach>>((ref) async {
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
+
+  Future<void> _confirmClearHistory(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.clearHistory, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Text(l10n.clearHistoryConfirm, style: GoogleFonts.poppins()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    await ref.read(messageRepositoryProvider).deleteAllMessages();
+    ref.invalidate(historyCoachesProvider);
+    ref.invalidate(conversationsProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.success, style: GoogleFonts.poppins()),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,9 +82,8 @@ class HistoryScreen extends ConsumerWidget {
              actions: [
               IconButton(
                 icon: const Icon(LucideIcons.trash2, color: Colors.white),
-                onPressed: () {
-                  // TODO: Clear history feature
-                },
+                tooltip: AppLocalizations.of(context).clearHistory,
+                onPressed: () => _confirmClearHistory(context, ref),
               ),
             ],
           ),

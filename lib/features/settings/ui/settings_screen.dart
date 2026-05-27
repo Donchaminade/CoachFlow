@@ -3,10 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/config/app_links.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/providers/settings_providers.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+
+Future<void> _launchExternalUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    debugPrint('Impossible d\'ouvrir: $url');
+  }
+}
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -362,7 +371,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                   ),
                   trailing: Text(
-                    '1.0.0',
+                    '1.1.0',
                     style: GoogleFonts.poppins(color: Colors.grey[600]),
                   ),
                 ),
@@ -374,9 +383,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                   ),
                   trailing: const Icon(LucideIcons.externalLink, size: 18),
-                  onTap: () {
-                    // TODO: Open GitHub
-                  },
+                  onTap: () => _launchExternalUrl(AppLinks.githubRepo),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -386,9 +393,7 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                   ),
                   trailing: const Icon(LucideIcons.externalLink, size: 18),
-                  onTap: () {
-                    // TODO: Open support email
-                  },
+                  onTap: () => _launchExternalUrl(AppLinks.supportEmail),
                 ),
               ],
             ),

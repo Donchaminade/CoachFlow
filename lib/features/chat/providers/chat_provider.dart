@@ -206,5 +206,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
       state = state.copyWith(isTyping: false);
     }
   }
+
+  Future<void> deleteMessage(String messageId) async {
+    await _repository.deleteMessage(messageId);
+    await loadMessages();
+  }
+
+  Future<void> deleteMessages(List<String> messageIds) async {
+    if (messageIds.isEmpty) return;
+    await _repository.deleteMessages(messageIds);
+    await loadMessages();
+  }
 }
 

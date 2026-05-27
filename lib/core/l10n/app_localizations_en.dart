@@ -178,6 +178,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receivedFromOthers => 'Received from other users';
   
   @override
+  String get myNetwork => 'My Network';
+  
+  @override
+  String get manageContacts => 'Manage your contacts';
+  
+  @override
+  String get clearHistory => 'Clear history';
+  
+  @override
+  String get clearHistoryConfirm =>
+      'Delete all conversation history from this device? This cannot be undone.';
+  
+  @override
   String get about => 'About';
   
   @override

@@ -178,6 +178,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get receivedFromOthers => 'Reçues d\'autres utilisateurs';
   
   @override
+  String get myNetwork => 'Mon Réseau';
+  
+  @override
+  String get manageContacts => 'Gérer vos contacts';
+  
+  @override
+  String get clearHistory => 'Effacer l\'historique';
+  
+  @override
+  String get clearHistoryConfirm =>
+      'Supprimer tout l\'historique des conversations sur cet appareil ? Cette action est irréversible.';
+  
+  @override
   String get about => 'À propos';
   
   @override

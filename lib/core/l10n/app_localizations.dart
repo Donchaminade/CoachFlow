@@ -70,6 +70,10 @@ abstract class AppLocalizations {
   String get allConversations;
   String get sharedConversations;
   String get receivedFromOthers;
+  String get myNetwork;
+  String get manageContacts;
+  String get clearHistory;
+  String get clearHistoryConfirm;
   String get about;
   String get helpSupport;
   String get user;

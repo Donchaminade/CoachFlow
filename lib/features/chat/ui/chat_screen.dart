@@ -13,8 +13,8 @@ import '../providers/chat_provider.dart';
 import '../../coach/providers/coach_provider.dart';
 import '../../coach/models/coach.dart';
 import '../models/message.dart';
-import '../data/message_repository.dart';
 import '../data/tts_service.dart';
+import '../providers/conversation_provider.dart';
 import '../../sharing/ui/share_conversation_dialog.dart';
 import '../../sharing/ui/share_with_contact_dialog.dart';
 
@@ -152,6 +152,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             _actionTile(
               context,
+              icon: LucideIcons.checkSquare,
+              label: "Sélectionner",
+              onTap: () {
+                Navigator.pop(context);
+                _toggleSelectionMode(message.id);
+              },
+            ),
+            _actionTile(
+              context,
               icon: LucideIcons.trash2,
               label: "Supprimer",
               color: Colors.red,
@@ -266,12 +275,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   void _deleteMessage(Message message) async {
     try {
-      // Delete from repository
-      final messageRepo = MessageRepository();
-      await messageRepo.deleteMessage(message.id);
-      
-      // Refresh the chat to update UI
-      ref.invalidate(chatProvider(widget.coachId));
+      await ref.read(chatProvider(widget.coachId).notifier).deleteMessage(message.id);
+      ref.invalidate(conversationsProvider);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -304,15 +309,73 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  Future<void> _confirmDeleteSelectedMessages() async {
+    if (_selectedMessageIds.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Supprimer ${_selectedMessageIds.length} message(s) ?",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          "Cette action est irréversible.",
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Annuler", style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              "Supprimer",
+              style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteSelectedMessages();
+    }
+  }
+
   Future<void> _deleteSelectedMessages() async {
-    // TODO: Implement deletion via repository
     final idsToDelete = _selectedMessageIds.toList();
-    print("🗑️ Deleting messages: $idsToDelete");
-    
-    // For now, just clear selection
-    _cancelSelection();
-    
-    // TODO: Call repository.deleteMessages(idsToDelete) and refresh
+    if (idsToDelete.isEmpty) return;
+
+    try {
+      await ref.read(chatProvider(widget.coachId).notifier).deleteMessages(idsToDelete);
+      ref.invalidate(conversationsProvider);
+      _cancelSelection();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "${idsToDelete.length} message(s) supprimé(s)",
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur lors de la suppression", style: GoogleFonts.poppins()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -347,10 +410,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: Colors.white), // White Icon
-          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(
+            _selectionMode ? LucideIcons.x : LucideIcons.chevronLeft,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            if (_selectionMode) {
+              _cancelSelection();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
-        title: Row(
+        title: _selectionMode
+            ? Text(
+                '${_selectedMessageIds.length} sélectionné(s)',
+                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+              )
+            : Row(
           children: [
             CircleAvatar(
               radius: 18,
@@ -382,6 +459,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
+          if (_selectionMode) ...[
+            IconButton(
+              icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+              tooltip: 'Supprimer la sélection',
+              onPressed: _selectedMessageIds.isEmpty ? null : _confirmDeleteSelectedMessages,
+            ),
+          ] else ...[
           IconButton(
             icon: const Icon(LucideIcons.send, color: Colors.white), // Direct Share Icon
             tooltip: 'Envoyer à un contact',
@@ -476,6 +560,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               }
             },
           ),
+          ],
         ],
       ),
       body: Column(
@@ -533,15 +618,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isUser = message.isUser;
     final theme = Theme.of(context);
 
+    final isSelected = _selectedMessageIds.contains(message.id);
+
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
-        onLongPress: () => _showMessageActions(context, message),
+        onTap: _selectionMode ? () => _toggleSelectionMode(message.id) : null,
+        onLongPress: _selectionMode ? null : () => _showMessageActions(context, message),
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
           decoration: BoxDecoration(
+            border: isSelected
+                ? Border.all(color: theme.colorScheme.primary, width: 2)
+                : null,
             color: isUser 
                 ? (Theme.of(context).brightness == Brightness.dark 
                     ? const Color(0xFF6366F1) // Indigo for dark mode

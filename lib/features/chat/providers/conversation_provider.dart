@@ -28,7 +28,7 @@ final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
           coach: coach,
           lastMessage: lastMsg,
           lastMessageTime: lastMsg.timestamp,
-          unreadCount: 0, // TODO: implement unread count logic
+          unreadCount: 0,
         ));
       }
     } catch (e) {

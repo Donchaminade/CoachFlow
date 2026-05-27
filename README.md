@@ -74,10 +74,9 @@ CoachFlow is built with a focus on **Clean Architecture**, Scalability, and Perf
     ```
 
 3.  **Environment Setup:**
-    Create a `.env` file (or update `lib/core/config/supabase_config.dart`) with your keys:
-    ```dart
-    const supabaseUrl = 'YOUR_SUPABASE_URL';
-    const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+    Copy `.env.example` to `.env` and fill in your keys, or update `lib/core/config/supabase_config.dart`:
+    ```bash
+    cp .env.example .env
     ```
 
 4.  **Run the app:**
@@ -91,9 +90,23 @@ CoachFlow is built with a focus on **Clean Architecture**, Scalability, and Perf
 
 - [x] **MVP**: Core Chat, Local Storage, Mock AI.
 - [x] **V1.0**: Real AI (Bytez), Biometrics, User Context, Supabase Sync.
-- [ ] **V1.1 (Current Focus)**: Direct Share (In-app contact sharing).
+- [x] **V1.1**: Direct Share (in-app contact sharing), message deletion, clear history, settings links, i18n polish.
 - [ ] **V1.2**: Voice Mode (Full duplex conversation).
 - [ ] **V2.0**: Coach Marketplace (Community extensions).
+
+---
+
+## 🏆 GitHub Finish-Up-A-Thon (DEV Challenge)
+
+This project is being submitted to the **[GitHub Finish-Up-A-Thon](https://dev.to/challenges/finishupathon)** — reviving an abandoned side project with a clear **before/after** story and **GitHub Copilot** assistance.
+
+| Resource | Link |
+|----------|------|
+| Submission article (draft) | [docs/FINISH_UP_A_THON_SUBMISSION.md](docs/FINISH_UP_A_THON_SUBMISSION.md) |
+| Before snapshot (git) | `git checkout 941d27b` |
+| V1.1 release tag | `v1.1.0-finishathon` _(create after final push)_ |
+
+**Quick demo path:** Create coach → Chat → Share to contact → View in Shared tab → Continue conversation.
 
 ---
 
